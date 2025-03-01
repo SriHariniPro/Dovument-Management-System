@@ -2,7 +2,6 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional, Dict
 from datetime import datetime
-from botocore.exceptions import ClientError
 import os
 from dotenv import load_dotenv
 from models import Document, User, DocumentMetadata
