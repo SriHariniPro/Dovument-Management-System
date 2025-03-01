@@ -6,16 +6,31 @@ import spacy
 import os
 from datetime import datetime
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=os.getenv('LOG_LEVEL', 'INFO'),
+    filename=os.getenv('LOG_FILE', 'app.log'),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 class AIService:
     def __init__(self):
         try:
+            # Configure pytesseract path if specified
+            if os.getenv('TESSERACT_CMD'):
+                pytesseract.pytesseract.tesseract_cmd = os.getenv('TESSERACT_CMD')
+
             # Load spaCy model
-            self.nlp = spacy.load("en_core_web_sm")
+            self.nlp = spacy.load(os.getenv('SPACY_MODEL', 'en_core_web_sm'))
             
             # Try to load model from local cache first
-            model_name = "distilbert-base-uncased-sentiment"
-            cache_dir = os.path.join(os.getcwd(), "models")
+            model_name = os.getenv('SENTIMENT_MODEL', 'distilbert-base-uncased-sentiment')
+            cache_dir = os.path.join(os.getcwd(), os.getenv('MODEL_CACHE_DIR', 'models'))
             os.makedirs(cache_dir, exist_ok=True)
 
             try:
@@ -29,7 +44,7 @@ class AIService:
                 logging.info("Loaded sentiment analysis model from cache")
             except Exception as e:
                 logging.warning(f"Could not load model from cache: {e}")
-                # If local load fails, try downloading (will raise error if offline)
+                # If local load fails, try downloading
                 self.sentiment_analyzer = pipeline(
                     "sentiment-analysis",
                     model=model_name,
@@ -38,7 +53,6 @@ class AIService:
                 logging.info("Downloaded sentiment analysis model")
         except Exception as e:
             logging.error(f"Error initializing AI service: {e}")
-            # Initialize with basic functionality
             self.nlp = None
             self.sentiment_analyzer = None
 
@@ -81,7 +95,8 @@ class AIService:
     def _process_pdf(self, content: bytes) -> str:
         """Extract text from PDF documents"""
         try:
-            images = convert_from_bytes(content)
+            dpi = int(os.getenv('PDF_DPI', '200'))
+            images = convert_from_bytes(content, dpi=dpi)
             text = ""
             for image in images:
                 text += pytesseract.image_to_string(image)
@@ -103,9 +118,11 @@ class AIService:
         try:
             if not self.nlp:
                 return []
-            doc = self.nlp(text[:5000])  # Limit text length for processing
+            max_length = int(os.getenv('MAX_TEXT_LENGTH', '5000'))
+            doc = self.nlp(text[:max_length])
             entities = []
-            for ent in doc.ents:
+            max_entities = int(os.getenv('MAX_ENTITIES', '10'))
+            for ent in list(doc.ents)[:max_entities]:
                 entities.append({
                     "text": ent.text,
                     "label": ent.label_,
@@ -122,7 +139,8 @@ class AIService:
         try:
             if not self.sentiment_analyzer:
                 return {"label": "NEUTRAL", "score": 0.5}
-            result = self.sentiment_analyzer(text[:512])[0]
+            max_length = int(os.getenv('MAX_SENTIMENT_LENGTH', '512'))
+            result = self.sentiment_analyzer(text[:max_length])[0]
             return {
                 "label": result["label"],
                 "score": float(result["score"])
@@ -163,13 +181,15 @@ class AIService:
         """Generate tags from entities and key phrases"""
         try:
             tags = set()
+            max_entities = int(os.getenv('MAX_ENTITIES', '10'))
+            max_keywords = int(os.getenv('MAX_KEYWORDS', '5'))
             
             # Add entity-based tags
-            for entity in entities[:10]:
+            for entity in entities[:max_entities]:
                 tags.add(entity['text'].lower())
                 
             # Add key phrase-based tags
-            for phrase in key_phrases[:5]:
+            for phrase in key_phrases[:max_keywords]:
                 tags.add(phrase.lower())
                 
             return list(tags)
@@ -181,6 +201,7 @@ class AIService:
         """Find relationships between entities"""
         try:
             relationships = []
+            max_relationships = int(os.getenv('MAX_RELATIONSHIPS', '10'))
             for i, entity1 in enumerate(entities):
                 for entity2 in entities[i+1:]:
                     if entity1['label'] != entity2['label']:
@@ -189,7 +210,9 @@ class AIService:
                             "entity2": entity2['text'],
                             "type": f"{entity1['label']}_to_{entity2['label']}"
                         })
-            return relationships[:10]
+                        if len(relationships) >= max_relationships:
+                            return relationships
+            return relationships
         except Exception as e:
             logging.error(f"Error finding relationships: {e}")
             return []
