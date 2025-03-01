@@ -1,6 +1,6 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Depends
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
@@ -13,7 +13,7 @@ from services.document_service import DocumentService
 
 load_dotenv()
 
-app = FastAPI(title="SmartDocs AI API")
+app = FastAPI(title="SmartDocs AI API", version="1.0.0")
 
 # CORS middleware configuration
 app.add_middleware(
@@ -28,6 +28,20 @@ app.add_middleware(
 ai_service = AIService()
 auth_service = AuthService()
 document_service = DocumentService()
+
+@app.get("/")
+async def root() -> Dict[str, str]:
+    """Root endpoint returning API information."""
+    return {
+        "message": "Welcome to SmartDocs AI API",
+        "version": "1.0.0",
+        "status": "running"
+    }
+
+@app.get("/health")
+async def health_check() -> Dict[str, str]:
+    """Health check endpoint."""
+    return {"status": "healthy"}
 
 @app.post("/api/documents/upload")
 async def upload_document(
