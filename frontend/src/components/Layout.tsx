@@ -8,12 +8,16 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const logout = useAuthStore(state => state.logout);
-  const username = useAuthStore(state => state.user?.username);
+  const logout = useAuthStore((state) => state.logout);
+  const username = useAuthStore((state) => state.user?.username);
 
   const navigation: NavItem[] = [
     {
