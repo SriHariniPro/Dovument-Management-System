@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
 
 interface NavItem {
   name: string;
@@ -15,9 +14,7 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const logout = useAuthStore((state) => state.logout);
-  const username = useAuthStore((state) => state.user?.username);
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   const navigation: NavItem[] = [
     {
@@ -48,11 +45,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       ),
     },
   ];
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -96,22 +88,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               ))}
             </nav>
           </div>
-          <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
-            <div className="flex items-center">
-              <div>
-                <p className="text-base font-medium text-gray-700">{username}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="ml-auto flex-shrink-0 bg-white p-1 text-gray-400 rounded-full hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <span className="sr-only">Logout</span>
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -138,22 +114,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </button>
               ))}
             </nav>
-          </div>
-          <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
-            <div className="flex items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-700">{username}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="ml-auto flex-shrink-0 bg-white p-1 text-gray-400 rounded-full hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <span className="sr-only">Logout</span>
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </button>
-            </div>
           </div>
         </div>
       </div>
