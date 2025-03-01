@@ -2,7 +2,6 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional, Dict
 from datetime import datetime
-import boto3
 from botocore.exceptions import ClientError
 import os
 from dotenv import load_dotenv
@@ -10,6 +9,8 @@ from models import Document, User, DocumentMetadata
 from services.ai_service import AIService
 from services.auth_service import AuthService
 from services.document_service import DocumentService
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 load_dotenv()
 
@@ -24,10 +25,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Initialize services
 ai_service = AIService()
 auth_service = AuthService()
 document_service = DocumentService()
+
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse("static/favicon.ico")
 
 @app.get("/")
 async def root() -> Dict[str, str]:
