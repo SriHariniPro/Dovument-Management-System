@@ -1,54 +1,38 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './stores/authStore';
-import { Login } from './components/Login';
-import { Register } from './components/Register';
-import { Dashboard } from './components/Dashboard';
-import { Upload } from './components/Upload';
-import { Documents } from './components/Documents';
-import { Layout } from './components/Layout';
-
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
-};
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import Dashboard from './components/Dashboard';
+import Documents from './components/Documents';
+import Upload from './components/Upload';
+import Login from './components/Login';
+import Register from './components/Register';
 
 const App: React.FC = () => {
+  // Simple auth check - replace with your actual auth logic
+  const isAuthenticated = (): boolean => {
+    return !!localStorage.getItem('token');
+  };
+
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/upload"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Upload />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/documents"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Documents />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        
+        {/* Protected Routes */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={
+            isAuthenticated() ? <Dashboard /> : <Navigate to="/login" />
+          } />
+          <Route path="documents" element={
+            isAuthenticated() ? <Documents /> : <Navigate to="/login" />
+          } />
+          <Route path="upload" element={
+            isAuthenticated() ? <Upload /> : <Navigate to="/login" />
+          } />
+        </Route>
+      </Routes>
+    </Router>
   );
 };
 
